@@ -59,3 +59,4 @@ add_custom_target(
 add_dependencies(urlog liburing)
 
 add_subdirectory (example)
+add_subdirectory (tail_monitor)

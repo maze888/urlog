@@ -34,7 +34,7 @@ void IOUring::init(const std::string fileName)
 		throw SystemException(-rv, "io_uring_queue_init(64) is failed");
 	}
 
-	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_APPEND, 0644);
+	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
 	if ( mFileFD < 0 ) {
 		throw SystemException("open() is failed: (path: {})", fileName.c_str());
 	}
