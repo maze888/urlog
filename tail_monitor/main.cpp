@@ -25,7 +25,7 @@ void print_tail(const char *path, std::uintmax_t old_size, std::uintmax_t new_si
 	}
 
 	size_t nread = fread(buf, 1, read_size, fp);
-	fprintf(stdout, "%s", buf);
+	fwrite(buf, read_size, 1, stdout);
 	(void)nread;
 
 	free(buf);
@@ -59,13 +59,13 @@ int main(int argc, char **argv)
 
 		while (1) {
 			new_size = std::filesystem::file_size(argv[1]);
-
+				
 			if ( old_size < new_size ) {
 				print_tail(argv[1], old_size, new_size);
 				old_size = new_size;
 			}
-			else if ( old_size >= new_size ) { // this case is new file
-				old_size = std::filesystem::file_size(argv[1]);
+			else if ( old_size > new_size ) { // this case is new file
+				old_size = 0;
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(millisecond));
