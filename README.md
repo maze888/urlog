@@ -1,2 +1,2 @@
 # urlog
-async log library using io_uring
+async file logging library using io_uring (https://github.com/axboe/liburing)
