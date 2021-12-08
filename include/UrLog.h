@@ -10,11 +10,12 @@
 #include <memory>
 #include <vector>
 #include <system_error>
+
 #include "fmt/chrono.h"
 
 #include "IOUring.h"
 
-constexpr unsigned MAX_IO_URING_QUEUE_SIZE = 64;
+constexpr unsigned MAX_IO_URING_QUEUE_SIZE = 1024;
 
 namespace urlog {
 
@@ -24,13 +25,13 @@ public:
 	~UrLog();
 
 	template <typename S, typename... Args>
-	void log(const char* file, int line, const S& format, Args&&... args) 
+	void log(const S& format, Args&&... args) 
 	{
-		vlog(file, line, format, fmt::make_args_checked<Args...>(format, args...));
+		vlog(format, fmt::make_args_checked<Args...>(format, args...));
 	}
 
 private:
-	void vlog(const char* file, int line, fmt::string_view format, fmt::format_args args);
+	void vlog(fmt::string_view format, fmt::format_args args);
 	uint64_t generateTransactionID(std::chrono::system_clock::duration d);
 	void submitRing(uint64_t transactionID);
 

@@ -15,7 +15,6 @@ IOUring::IOUring()
 
 IOUring::~IOUring()
 {
-	//printf("size: %ld\n", mIOUringBuffers.size());
 	while ( mRemainingCompletions > 0 ) {
 		complete();
 	}
@@ -34,7 +33,8 @@ void IOUring::init(const std::string fileName)
 		throw SystemException(-rv, "io_uring_queue_init(64) is failed");
 	}
 
-	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
+	//mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
+	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND | O_TRUNC, 0644);
 	if ( mFileFD < 0 ) {
 		throw SystemException("open() is failed: (path: {})", fileName.c_str());
 	}
@@ -57,10 +57,6 @@ void IOUring::submit(uint64_t transactionID, const void* data, size_t size)
 	}
 
 	IOUringBuffer *buffer = getIOUringBuffer(transactionID, data, size);
-
-	//sqe->flags |= IOSQE_IO_LINK;
-	//io_uring_sqe_set_data(sqe, data);
-	// EBADF
 
 	struct iovec iov;
 	iov.iov_base = buffer->getBuffer();
@@ -85,14 +81,11 @@ void IOUring::complete()
 	io_uring_cq_advance(&mRing, completions);
 	mRemainingCompletions -= completions;
 		
-	//if ( completions > 1 ) printf("completions: %d\n", completions);
-
 	for ( int i = 0; i < completions; i++ ) {
 		if ( mCqes[i]->res < 0 ) {
 			throw SystemException(-mCqes[i]->res, "complete() async task is failed");
 		}
 	
-		//printf("res: %d\n", mCqes[i]->res);
 		for ( auto it = begin(mIOUringBuffers); it != end(mIOUringBuffers); it++ ) {
 			if ( it->get()->getTransactionID() == mCqes[i]->user_data ) {
 				it->get()->setLockStatus(false);
@@ -106,7 +99,6 @@ IOUringBuffer* IOUring::getIOUringBuffer(uint64_t transactionID, const void* dat
 	for ( auto it = begin(mIOUringBuffers); it != end(mIOUringBuffers); it++ ) {
 		if ( it->get()->getLockStatus() == false ) {
 			it->get()->make(transactionID, data, size);
-			//printf("here return.\n");
 			return it->get();
 		}
 	}

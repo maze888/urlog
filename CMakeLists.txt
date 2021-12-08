@@ -41,7 +41,7 @@ endif()
 
 include_directories (${CMAKE_SOURCE_DIR}/include ${liburing_SOURCE_DIR}/src/include)
 link_directories (${liburing_BINARY_DIR}/lib)
-link_libraries (uring pthread)
+link_libraries (uring)
 
 file (GLOB SRCS src/*.cpp)
 
@@ -59,4 +59,5 @@ add_custom_target(
 add_dependencies(urlog liburing)
 
 add_subdirectory (example)
+add_subdirectory (bench)
 add_subdirectory (tail_monitor)

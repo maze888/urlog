@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
 	//FILE *fp = fopen("./test.log", "w");
 	for ( int i = 0; i < atoi(argv[1]); i++ ) {
-		urlog.log(__FILE__, __LINE__, "[basic_st] [info] Hello logger: msg number {}\n", i);
+		urlog.log("[basic_st] [info] Hello logger: msg number {}\n", i);
 		//printf("[basic_st] [info] Hello logger: msg number %d\n", i);
 		//fprintf(fp, "[basic_st] [info] Hello logger: msg number %d\n", i);
 		//sleep(3);

@@ -1,13 +1,11 @@
 #include "UrLog.h"
 
-#include <pthread.h>
+#include <thread>
 
 using namespace std::chrono;
 using namespace urlog;
 using namespace urlog::iouringbuffer;
 
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-	
 UrLog::UrLog(std::string fileName)
 {
 	mIOUring.init(fileName);
@@ -20,7 +18,7 @@ UrLog::~UrLog()
 	}
 }
 	
-void UrLog::vlog(const char* file, int line, fmt::string_view format, fmt::format_args args)
+void UrLog::vlog(fmt::string_view format, fmt::format_args args)
 {
 	auto now = system_clock::now();
 	auto now_epoch = now.time_since_epoch();
@@ -32,8 +30,6 @@ void UrLog::vlog(const char* file, int line, fmt::string_view format, fmt::forma
 		mCurrentDateTime = fmt::format("[{:%Y-%m-%d %H:%M:}{:%S}]", fmt::localtime(system_clock::to_time_t(now)), now_epoch);
 	}
 
-	// TODO: 이 구간을 뮤텍스로 묶으면 스레드 안전? 고려해볼것.
-	//pthread_mutex_lock(&lock);
 	fmt::format_to(std::back_inserter(mLogBuffer), "{} ", mCurrentDateTime);
 	fmt::vformat_to(std::back_inserter(mLogBuffer), format, args);
 
@@ -42,8 +38,6 @@ void UrLog::vlog(const char* file, int line, fmt::string_view format, fmt::forma
 		mCurrentMilliSecond = currentMilliSecond;
 		mLogBuffer.clear();
 	}
-	// 여기까지 묶는다면..
-	//pthread_mutex_unlock(&lock);
 	mIOUring.complete();
 }
 
