@@ -1,8 +1,7 @@
 #include "UrLog.h"
 
+#include <filesystem>
 #include <thread>
-
-constexpr int TEST_THREAD_COUNT = 4;
 
 using namespace std::chrono;
 
@@ -18,7 +17,7 @@ void bench_st(int howmany)
 void bench_mt(int howmany, int threadCount)
 {
 	std::vector<std::thread> threads;
-
+	
 	threads.reserve(threadCount);
 	for ( int i = 0; i < threadCount; i++ ) {
 		threads.emplace_back([&]() {
@@ -53,18 +52,32 @@ void bench_mt_test(int howmany, int threadCount)
 	fmt::print("{:<30} ELapsed: {:0.2f} secs {:>16L}/sec\n", "basic_mt", delta_d, (int)(howmany / delta_d));
 }
 
+void clear_directory()
+{
+	std::filesystem::remove_all("./logs");
+    std::filesystem::create_directories("./logs");
+}
+
 int main(int argc, char **argv)
 {
-	if ( argc != 2 ) {
-		fprintf(stderr, "Usage: %s (howmany count)\n", argv[0]);
+	if ( argc != 3 ) {
+		fprintf(stderr, "Usage: %s (howmany count) (thread count)\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	try {
 		int howmany = std::stoi(argv[1]);
+		int thread_count = std::stoi(argv[2]);
+
+		if ( thread_count > 256 ) {
+			fprintf(stderr, "too many threads: %d\n", thread_count);
+			return EXIT_FAILURE;
+		}
+
+		clear_directory();
 
 		bench_st_test(howmany);
-		bench_mt_test(howmany, TEST_THREAD_COUNT);
+		bench_mt_test(howmany, thread_count);
 	}
 	catch (std::exception &e) {
 		fmt::print("{}\n", e.what());

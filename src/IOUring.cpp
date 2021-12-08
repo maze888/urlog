@@ -26,15 +26,12 @@ IOUring::~IOUring()
 
 void IOUring::init(const std::string fileName)
 {
-	int rv = io_uring_queue_init(MAX_IO_URING_QUEUE_SIZE, &mRing, 0);
-	//int rv = io_uring_queue_init(MAX_IO_URING_QUEUE_SIZE, &mRing, IORING_SETUP_SQPOLL | IORING_SETUP_SQ_AFF);
-	//int rv = io_uring_queue_init(MAX_IO_URING_QUEUE_SIZE, &mRing, IORING_SETUP_SQPOLL);
+	int rv = io_uring_queue_init(MAX_IO_URING_QUEUE_SIZE, &mRing, 0); // IORING_SETUP_ATTACH_WQ
 	if ( rv < 0 ) {
 		throw SystemException(-rv, "io_uring_queue_init(64) is failed");
 	}
 
-	//mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
-	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND | O_TRUNC, 0644);
+	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
 	if ( mFileFD < 0 ) {
 		throw SystemException("open() is failed: (path: {})", fileName.c_str());
 	}
