@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+//#include <string>
 #include <memory>
 
 namespace urlog::iouringbuffer {
@@ -15,6 +15,7 @@ namespace urlog::iouringbuffer {
 			bool getLockStatus() const;
 			void* getBuffer() const;
 			size_t getBufferSize() const;
+			void freeBuffer();
 
 			void make(uint64_t transactionID, const void* data, const size_t size);
 		private:

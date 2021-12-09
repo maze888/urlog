@@ -1,35 +1,51 @@
 #include "UrLog.h"
 
-using namespace std::chrono;
+/*void test(urlog::UrLog& urlog, int howmany)
+{
+	for ( int i = 0; i < howmany + 10; i++ ) {
+		if ( i > howmany ) sleep(1);
+		urlog.log("[basic_st] [info] Hello logger: msg number {}\n", i);
+	}
+}*/
 
-int main(int argc, char **argv)
+void test(int howmany)
 {
 	urlog::UrLog urlog("./test.log");
 
+	for ( int i = 0; i < howmany; i++ ) {
+		urlog.log("[basic_st] [info] Hello logger: msg number {}\n", i);
+	}
+}
+
+int main(int argc, char **argv)
+{
 	if ( argc != 2 ) {
 		fprintf(stderr, "Usage: %s (loop count)\n", argv[0]);
 		return 1;
 	}
+	
+	unlink("./test.log");
+	
+	//urlog::UrLog urlog("./test.log");
+	//for ( int i = 0; i < atoi(argv[1]); i++ ) {
+		//test(urlog, atoi(argv[1]));
+	//}
+	
+	test(atoi(argv[1]));
 
-	//FILE *fp = fopen("./test.log", "w");
-	for ( int i = 0; i < atoi(argv[1]); i++ ) {
-		urlog.log("[basic_st] [info] Hello logger: msg number {}\n", i);
-		//printf("[basic_st] [info] Hello logger: msg number %d\n", i);
-		//fprintf(fp, "[basic_st] [info] Hello logger: msg number %d\n", i);
-		//sleep(3);
-	}
-	//fclose(fp);
+	/*std::string mPath = "test.log";
+	std::size_t mMaxFile = 10;
 
-	//printf("%ld %ld\n", time(NULL), system_clock::to_time_t(system_clock::now()));
-	//printf("%ld %ld\n", time(NULL), std::time(nullptr));
+	std::size_t found = mPath.find_last_of(".");
+	std::string path = mPath.substr(0, found);
+	std::string ext = mPath.substr(found + 1);
 
-	/*using namespace std::chrono;
-
-	auto now = system_clock::now();
-
-	//auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-	auto ms = duration_cast<milliseconds>(now.time_since_epoch());
-	fmt::print("{} {}", now, ms);*/
+	//mRotatePath.push_back(path + ext);
+	for ( std::size_t i = 1; i < mMaxFile; i++ ) {
+		//s = fmt::format("{}.{}.{}", path, i, ext);
+		//mRotatePath.push_back(fmt::format("{}.{}.{}", path, i, ext));
+		std::cout << fmt::format("{}.{}.{}", path, i, ext) << std::endl;
+	}*/
 
 	return 0;
 }

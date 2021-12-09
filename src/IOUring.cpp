@@ -1,12 +1,10 @@
 #include "IOUring.h"
 #include "SystemException.h"
 
-#include <fcntl.h>
-
 using namespace urlog::iouring;
 using namespace urlog::exception;
 
-constexpr unsigned MAX_IO_URING_QUEUE_SIZE = 256;
+constexpr unsigned MAX_IO_URING_QUEUE_SIZE = 8192;
 
 IOUring::IOUring()
 	: mFileFD(-1), mRemainingCompletions(0)
@@ -15,6 +13,14 @@ IOUring::IOUring()
 
 IOUring::~IOUring()
 {
+	// test
+	//printf("mIOUringBuffers: %lu\n", mIOUringBuffers.size());
+	std::uintmax_t sum = 0;
+	for ( auto it = begin(mIOUringBuffers); it != end(mIOUringBuffers); it++ ) {
+		sum += it->get()->getBufferSize();
+	}
+	//printf("total buffer: %luk\n", sum / 1024);
+
 	while ( mRemainingCompletions > 0 ) {
 		complete();
 	}
@@ -24,16 +30,16 @@ IOUring::~IOUring()
 	io_uring_queue_exit(&mRing);
 }
 
-void IOUring::init(const std::string fileName)
+void IOUring::init(const std::string path)
 {
 	int rv = io_uring_queue_init(MAX_IO_URING_QUEUE_SIZE, &mRing, 0); // IORING_SETUP_ATTACH_WQ
 	if ( rv < 0 ) {
-		throw SystemException(-rv, "io_uring_queue_init(64) is failed");
+		throw SystemException(-rv, "io_uring_queue_init() is failed");
 	}
 
-	mFileFD = open(fileName.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
+	mFileFD = open(path.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
 	if ( mFileFD < 0 ) {
-		throw SystemException("open() is failed: (path: {})", fileName.c_str());
+		throw SystemException("open() is failed: (path: {})", path.c_str());
 	}
 
 	if ( io_uring_register_files(&mRing, &mFileFD, 1) ) {
@@ -81,11 +87,12 @@ void IOUring::complete()
 	for ( int i = 0; i < completions; i++ ) {
 		if ( mCqes[i]->res < 0 ) {
 			throw SystemException(-mCqes[i]->res, "complete() async task is failed");
+			continue;
 		}
 	
-		for ( auto it = begin(mIOUringBuffers); it != end(mIOUringBuffers); it++ ) {
-			if ( it->get()->getTransactionID() == mCqes[i]->user_data ) {
-				it->get()->setLockStatus(false);
+		for ( auto& it : mIOUringBuffers ) {
+			if ( it.get()->getTransactionID() == mCqes[i]->user_data ) {
+				it.get()->setLockStatus(false);
 			}
 		}
 	}
@@ -93,10 +100,10 @@ void IOUring::complete()
 
 IOUringBuffer* IOUring::getIOUringBuffer(uint64_t transactionID, const void* data, const size_t size)
 {
-	for ( auto it = begin(mIOUringBuffers); it != end(mIOUringBuffers); it++ ) {
-		if ( it->get()->getLockStatus() == false ) {
-			it->get()->make(transactionID, data, size);
-			return it->get();
+	for ( auto& it : mIOUringBuffers ) {
+		if ( it.get()->getLockStatus() == false ) {
+			it.get()->make(transactionID, data, size);
+			return it.get();
 		}
 	}
 
@@ -108,4 +115,18 @@ IOUringBuffer* IOUring::getIOUringBuffer(uint64_t transactionID, const void* dat
 	mIOUringBuffers.push_back(std::move(buffer));
 
 	return mIOUringBuffers.back().get();
+}
+	
+void IOUring::reopen(const std::string path)
+{
+	/*while ( mRemainingCompletions > 0 ) {
+		complete();
+	}*/
+
+	if ( mFileFD >= 0 ) close(mFileFD);
+
+	mFileFD = open(path.c_str(), O_CREAT | O_WRONLY | O_APPEND | O_TRUNC, 0644);
+	if ( mFileFD < 0 ) {
+		throw SystemException("reopen() is failed: (path: {})", path.c_str());
+	}
 }

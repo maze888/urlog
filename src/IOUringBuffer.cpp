@@ -7,16 +7,13 @@ using namespace urlog::exception;
 using namespace urlog::iouringbuffer;
 
 IOUringBuffer::IOUringBuffer()
-	:mTransactionID(0), mBuffer(NULL), mBufferSize(0), mBufferCapacity(0), mLockStatus(false)
+	:mTransactionID(0), mBuffer(nullptr), mBufferSize(0), mBufferCapacity(0), mLockStatus(false)
 {
 }
 
 IOUringBuffer::~IOUringBuffer()
 {
-	if ( mBuffer ) {
-		free(mBuffer);
-		mBuffer = NULL;
-	}
+	freeBuffer();
 }
 			
 uint64_t IOUringBuffer::getTransactionID() const
@@ -44,27 +41,35 @@ size_t IOUringBuffer::getBufferSize() const
 	return mBufferSize;
 }
 
+void IOUringBuffer::freeBuffer()
+{
+	if ( mBuffer ) {
+		free(mBuffer);
+		mBuffer = nullptr;
+	}
+}
+
 void IOUringBuffer::make(uint64_t transactionID, const void* data, const size_t size)
 {
-	if ( mBuffer == NULL ) {
+	if ( mBuffer == nullptr ) {
 		mBuffer = malloc(size);
-		if ( mBuffer == NULL ) {
+		if ( mBuffer == nullptr ) {
 			throw SystemException("malloc() is failed: (size: {})", size);
 		}
 		mBufferCapacity = size;
 	}
 	else {
-		while ( mBufferCapacity < size ) {
-			mBufferCapacity <<= 1;
-			mBuffer = realloc(mBuffer, mBufferCapacity);
-			if ( mBuffer == NULL ) {
-				throw SystemException("realloc() is failed: (size: {})", mBufferCapacity);
+		if ( mBufferCapacity < size ) {
+			mBuffer = realloc(mBuffer, size);
+			if ( mBuffer == nullptr ) {
+				throw SystemException("realloc() is failed: (size: {})", size);
 			}
+			mBufferCapacity = size;
 		}
 	}
 
 	mBufferSize = size;
-	memcpy(mBuffer, data, size);
+	std::memcpy(mBuffer, data, size);
 
 	mTransactionID = transactionID;
 	mLockStatus = true;

@@ -14,6 +14,7 @@ void bench_st(int howmany)
 	}
 }
 
+// FIXME: sync logging time
 void bench_mt(int howmany, int threadCount)
 {
 	std::vector<std::thread> threads;
